@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civic Voice Portal</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:#f2f5f9}
+header{background:#0d47a1;color:white;padding:18px;text-align:center}
+nav{display:flex;flex-wrap:wrap;justify-content:center;background:#1565c0}
+nav button{background:none;border:none;color:white;padding:14px 18px;cursor:pointer;font-size:15px}
+nav button:hover{background:#0d47a1}
+.container{max-width:1000px;margin:auto;padding:20px}
+.card{background:white;border-radius:8px;padding:18px;margin-bottom:20px;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+input,select,textarea{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:5px}
+button.primary{background:#1565c0;color:white;border:none;padding:10px 16px;border-radius:5px;cursor:pointer}
+button.primary:hover{background:#0d47a1}
+.issue-img{max-width:250px;margin-top:10px;border-radius:6px}
+.status{font-weight:bold;margin-top:6px}
+.hidden{display:none}
+footer{text-align:center;padding:15px;background:#e3e8ef}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>Welcome to Civic Voice</h2>
+<p>Report public issues. Improve your city.</p>
+</header>
+
+<div class="container">
+
+<div id="loginCard" class="card">
+<h3>User Login</h3>
+<input id="name" placeholder="Enter your name">
+<input id="mobile" placeholder="Mobile number">
+<button class="primary" onclick="login()">Enter Portal</button>
+</div>
+
+<div id="portal" class="hidden">
+
+<nav>
+<button onclick="showSection('report')">Report Issue</button>
+<button onclick="showSection('ongoing')">Ongoing Issues</button>
+<button onclick="showSection('resolved')">Resolved Issues</button>
+<button onclick="showSection('major')">Major District Issues</button>
+</nav>
+
+<div id="report" class="card">
+<h3>Report an Issue</h3>
+
+<select id="district">
+<option>Chennai</option>
+<option>Salem</option>
+<option>Madurai</option>
+<option>Coimbatore</option>
+<option>Tiruchirappalli</option>
+<option>Erode</option>
+<option>Tirunelveli</option>
+<option>Vellore</option>
+<option>Thoothukudi</option>
+<option>Kanchipuram</option>
+</select>
+
+<input id="area" placeholder="Enter Panchayat / Area">
+
+<textarea id="description" placeholder="Describe the civic problem"></textarea>
+
+<input type="file" id="image">
+
+<button class="primary" onclick="submitIssue()">Submit Issue</button>
+</div>
+
+<div id="ongoing" class="card hidden">
+<h3>Ongoing Issues</h3>
+<div id="ongoingList"></div>
+</div>
+
+<div id="resolved" class="card hidden">
+<h3>Resolved Issues</h3>
+<div id="resolvedList"></div>
+</div>
+
+<div id="major" class="card hidden">
+<h3>Major District Issues</h3>
+<div id="majorList"></div>
+</div>
+
+</div>
+
+<div id="adminPanel" class="card hidden">
+<h3>Admin Panel</h3>
+<input id="adminPass" placeholder="Admin password">
+<button class="primary" onclick="adminLogin()">Admin Login</button>
+<div id="adminIssues"></div>
+</div>
+
+</div>
+
+<footer>
+<p>Civic Voice Reporting System</p>
+</footer>
+
+<script>
+
+let issues=[]
+let user=null
+const ADMIN_PASSWORD="admin123"
+
+function login(){
+ const name=document.getElementById('name').value
+ const mobile=document.getElementById('mobile').value
+ if(name && mobile){
+ user={name,mobile}
+ document.getElementById('loginCard').style.display="none"
+ document.getElementById('portal').classList.remove('hidden')
+ }else{
+ alert("Enter name and mobile")
+ }
+}
+
+function showSection(section){
+ ['report','ongoing','resolved','major'].forEach(s=>{
+ document.getElementById(s).classList.add('hidden')
+ })
+ document.getElementById(section).classList.remove('hidden')
+}
+
+function submitIssue(){
+ const district=document.getElementById('district').value
+ const area=document.getElementById('area').value
+ const description=document.getElementById('description').value
+ const image=document.getElementById('image').files[0]
+
+ const reader=new FileReader()
+ reader.onload=function(){
+ const issue={district,area,description,img:reader.result,status:'ongoing'}
+ issues.push(issue)
+ render()
+ }
+
+ if(image){reader.readAsDataURL(image)}
+}
+
+function render(){
+ const ongoing=document.getElementById('ongoingList')
+ const resolved=document.getElementById('resolvedList')
+ const major=document.getElementById('majorList')
+
+ ongoing.innerHTML=""
+ resolved.innerHTML=""
+ major.innerHTML=""
+
+ issues.forEach((issue,i)=>{
+ const card=`
+ <div class='card'>
+ <b>${issue.district}</b> - ${issue.area}<br>
+ ${issue.description}<br>
+ <span class='status'>Status: ${issue.status}</span><br>
+ <img class='issue-img' src='${issue.img}'>
+ </div>`
+
+ if(issue.status==='ongoing') ongoing.innerHTML+=card
+ if(issue.status==='resolved') resolved.innerHTML+=card
+
+ if(issue.status==='ongoing') major.innerHTML+=card
+ })
+}
+
+function adminLogin(){
+ const pass=document.getElementById('adminPass').value
+ if(pass===ADMIN_PASSWORD){
+ showAdmin()
+ }else{
+ alert("Wrong password")
+ }
+}
+
+function showAdmin(){
+ const panel=document.getElementById('adminIssues')
+ panel.innerHTML=""
+ issues.forEach((issue,i)=>{
+ if(issue.status==='ongoing'){
+ panel.innerHTML+=`
+ <div class='card'>
+ <b>${issue.district}</b> - ${issue.area}<br>
+ ${issue.description}<br>
+ <button class='primary' onclick='resolveIssue(${i})'>Mark Resolved</button>
+ </div>`
+ }
+ })
+}
+
+function resolveIssue(i){
+ issues[i].status='resolved'
+ render()
+ showAdmin()
+}
+
+</script>
+
+</body>
+</html>
